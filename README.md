@@ -8,3 +8,6 @@ Current Status, Final Step: Polishing, project is pretty much done and can see a
 I have managed to bring forth a data-driven approach to the champions and traits architecture, the next days will be focused on polishing the code and cleaning out things that may have been hardcoded.
 
 While polishing I have decided to make the code more readable and industry-standard, for this reason I have decided to move all logic from the header files into different cpp files with the same name as them, I have also changed main.cpp so that the combat calculations and visuals are separated, What`s left is to keep polishing and to implement (if possible) a better pathfinding to enemies.
+
+
+Over the past week I have added a Team Selection screen and separated the simulator into different stages (Planning, Combat, End) What is left to do is create a End Screen and implement A* Pathfinding(Which is proving to be more difficult than I thought).
