@@ -3,7 +3,6 @@
 #include <functional>
 void managedamage(ChampState& champ1,ChampState& champ2, float dmg, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam);
 void autoattack(ChampState& champ, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam);
-std::vector<ChampState> RemoveDead(std::vector<ChampState> &team);
 using AbilityFunction = std::function<void(ChampState&, std::vector<ChampState>&, std::vector<ChampState>&)>;
 void akira_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam);
 void totom_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam);

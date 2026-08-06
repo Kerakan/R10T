@@ -5,11 +5,13 @@
 #include <string>
 #include "Grid.h"
 #include "Traits.h"
+enum class TargetingMethod {LowestHP, Closest};
 struct ChampDef{
     std::string name;
     int cost;
     int range;
     int mana_max;
+    TargetingMethod Targeting;
     std::array <float,3> hp;
     std::array <float,3> armor;
     std::array <float,3> magicres;
@@ -37,6 +39,7 @@ struct ChampState{
     float execute = 0;
     float hp_max = 0;
     float is_invulnerable_until = 0.0f;
+    bool is_dead = false;
     ChampState(const ChampDef& d, int s): def(d), star(s){
         range = def.range;
         hp_current = def.hp[star];
@@ -51,8 +54,15 @@ struct ChampState{
         return ChampState(other.def, other.star);
     }
 };
+inline std::unordered_map<std::string, TargetingMethod> TARGETING_POOL{
+    {"LowestHP",     TargetingMethod::LowestHP},
+    {"Closest",      TargetingMethod::Closest},
+};
 inline std::unordered_map<std::string, ChampDef> CHAMP_STORAGE;
 inline std::unordered_map<std::string, const ChampDef*> CHAMP_POOL;
-
+enum class GameState{Planning, Combat, End};
+inline GameState GamePhase = GameState::Planning;
 void LoadChampions();
 ChampState CreateChampion(std::string name, int star);
+inline std::vector<ChampState> Team1;
+inline std::vector<ChampState> Team2;

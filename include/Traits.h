@@ -27,5 +27,18 @@ const std::unordered_map<std::string, Trait> TRAIT_TRANSFORM = {
     {"ShadowFighters", Trait::Shadow_Fighters},
     {"DarkKnights", Trait::Dark_Knights},
 };
+const std::unordered_map<Trait, std::string> TRAIT_TRANSFORM_REVERSE = {
+    {Trait::Titan, "Titan"},
+    {Trait::Star_Forger, "StarForger"},
+    {Trait::Lovers, "Lovers"},
+    {Trait::Bruiser, "Bruiser"},
+    {Trait::Assassin, "Assassin"},
+    {Trait::Sniper, "Sniper"},
+    {Trait::Guardian, "Guardian"},
+    {Trait::Mage, "Mage"},
+    {Trait::Celestials, "Celestials"},
+    {Trait::Shadow_Fighters, "ShadowFighters"},
+    {Trait::Dark_Knights, "DarkKnights"},
+};
 inline std::unordered_map<Trait, TraitDef*> TRAIT_POOL;
 void LoadTraits();
