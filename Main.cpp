@@ -1,16 +1,14 @@
 #pragma once
 #include <iostream>
 #include "Champ.h"
-#include "Team.h"
 #include "Traits.h"
 #include "Combat.h"
 #include "Draw.h"
 int main(){
 	LoadTraits();
 	LoadChampions();
-	std::vector<ChampState> TeamA = CreateTeam();
-	std::vector<ChampState> TeamB = CreateTeam();
-	ApplyTraits(TeamA,TeamB);
+	const float Fixed_dt = 1.0f/120;
+	float accumulator = 0;
 	InitWindow(GetMonitorWidth(0), GetMonitorHeight(0), "Autobattler");
     ToggleBorderlessWindowed();
 	MaximizeWindow();
@@ -19,10 +17,26 @@ int main(){
     SetTargetFPS(120);
     EnableCursor();
 	while (!WindowShouldClose()){
-		float dt = GetFrameTime();	
-		run_combat(TeamA, TeamB, dt);
-		BeginDrawing();	
-		DrawCombat(TeamA, TeamB, Width, Height);
+		BeginDrawing();
+		if (GamePhase == GameState::Planning){
+			DrawPlanning(Width,Height);
+		}
+		else if(GamePhase == GameState::Combat){
+			DisableCursor();
+			float dt = GetFrameTime();
+			accumulator += dt;
+			if (accumulator >= Fixed_dt){
+				run_combat(Fixed_dt);
+				accumulator -= Fixed_dt;
+			}	
+			BeginDrawing();	
+			DrawCombat(Width, Height);
+			if(IsKeyDown(KEY_A)) Accelerate();
+			if(IsKeyDown(KEY_D)) Decelerate();   
+		}
+		else if(GamePhase == GameState::End){
+			
+		}
 		EndDrawing();
 	}
 	CloseWindow();

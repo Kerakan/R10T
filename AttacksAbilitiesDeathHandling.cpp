@@ -47,6 +47,10 @@ void managedamage(ChampState& champ1,ChampState& champ2, float dmg, std::vector<
             champ2.hp_current = 0;
         }
     }
+    if (champ2.hp_current<=0){
+        Log("Champion " + champ2.def.name + "died");
+        champ2.is_dead = true;
+    }
 }
 void autoattack(ChampState& champ, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam){
     if (champ.enemytarget == nullptr){
@@ -58,22 +62,11 @@ void autoattack(ChampState& champ, std::vector<ChampState> &AllyTeam, std::vecto
     managedamage(champ, *champ.enemytarget, damage, AllyTeam, EnemyTeam);
     champ.mana_current += 5;
 }
-std::vector<ChampState> RemoveDead(std::vector<ChampState> &team){
-    std::vector<ChampState> aux = {};
-    for (ChampState& champ: team){
-        if (champ.hp_current > 0){
-            aux.push_back(champ);
-        }
-        else if (champ.hp_current <= 0){
-            Log("Removing dead champion: " + champ.def.name);
-        }
-    }
-    return aux;
-}
 using AbilityFunction = std::function<void(ChampState&, std::vector<ChampState>&, std::vector<ChampState>&)>;
 void akira_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam){
     std::vector<ChampState> targets;
     for (ChampState& enemy: EnemyTeam){
+        if (enemy.is_dead) continue;
         if (targets.size() < 3){
             targets.push_back(enemy);
         }
@@ -122,6 +115,7 @@ void takeshi_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::
 }
 void draco_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam){
     for (ChampState& ally: AllyTeam){
+        if (ally.is_dead) continue;
         if (distance(champ.pos, ally.pos) <=1){
             ally.current_shield += 0.3f*champ.def.hp[champ.star];
             ally.hp_current += 0.1f*champ.hp_current;
@@ -136,6 +130,7 @@ void lyra_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vec
     for (GridPos& Hex: Hexes){
         if (champ.pos == Hex) continue;
         for (ChampState& enemy: EnemyTeam){
+            if (enemy.is_dead) continue;
             if(Hex == enemy.pos){
                 float damage = champ.ad_current*(100/(100+enemy.armor_current))*(1+(1.0f/(2+targetshit)));
                 Log("Champion " + champ.def.name + " deals " + std::to_string(damage) + " damage to " + enemy.def.name);
@@ -165,6 +160,7 @@ void andromeda_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std
 }
 void delphinus_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam){
     for (ChampState& ally: AllyTeam){
+        if (ally.is_dead) continue;
         float missing_health = ally.def.hp[ally.star]-ally.hp_current;
         ally.hp_current += 0.3f*missing_health;
         Log("Champion " + champ.def.name + " uses ability on " + ally.def.name + " healing " + std::to_string(0.3f*missing_health));
@@ -177,6 +173,7 @@ void hades_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::ve
     for (GridPos& Hex: Hexes){
         if (champ.pos == Hex) continue;
         for (ChampState& enemy: EnemyTeam){
+            if (enemy.is_dead) continue;
             if(Hex == enemy.pos){
                 float damage = champ.ap_current*(100/(50+enemy.magicres_current))*(1+(1.0f/(2+targetshit)));
                 Log("Champion " + champ.def.name + " deals " + std::to_string(damage) + " damage to " + enemy.def.name);
@@ -221,6 +218,7 @@ void goliath_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::
 }
 void solarix_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam){
     for (ChampState& enemy: EnemyTeam){
+        if (enemy.is_dead) continue;
         float damage = champ.ap_current*(100/(50+enemy.magicres_current));
         managedamage(champ, enemy, damage, AllyTeam, EnemyTeam);
         Log("Champion " + champ.def.name + " uses ability on " + enemy.def.name + " dealing " + std::to_string(damage) + " damage");

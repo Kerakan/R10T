@@ -21,9 +21,9 @@ std::vector<GridPos> Trajectory(GridPos a, GridPos b){
         int q = std::round(qfloat);
         int r = std::round(rfloat);
         int s = std::round(sfloat);
-        float diffq = abs(q-qfloat);
-        float diffr = abs(r-rfloat);
-        float diffs = abs(s-sfloat);
+        float diffq = std::abs(q-qfloat);
+        float diffr = std::abs(r-rfloat);
+        float diffs = std::abs(s-sfloat);
         float maxdiff = std::max({diffq, diffr, diffs});
         int qfinal;
         int rfinal;
@@ -42,4 +42,7 @@ std::vector<GridPos> Trajectory(GridPos a, GridPos b){
         if (std::find(HexesInTraj.begin(),HexesInTraj.end(),GridPos(qfinal,rfinal))==HexesInTraj.end()) HexesInTraj.push_back(GridPos(qfinal,rfinal));
     }
     return HexesInTraj;
+}
+bool is_valid(GridPos a, std::vector<GridPos> TeamGrid){
+    return (std::find(TeamGrid.begin(),TeamGrid.end(), a) != TeamGrid.end());
 }

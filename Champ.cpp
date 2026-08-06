@@ -17,6 +17,7 @@ void LoadChampions() {
         def.cost     = c["cost"];
         def.range    = c["range"];
         def.mana_max = c["mana_max"];
+        def.Targeting = TARGETING_POOL.at(c["Targeting"]);
         def.hp       = {c["hp"][0], c["hp"][1], c["hp"][2]};
         def.armor    = {c["armor"][0], c["armor"][1], c["armor"][2]};
         def.magicres = {c["magicres"][0], c["magicres"][1], c["magicres"][2]};
