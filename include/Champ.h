@@ -21,7 +21,7 @@ struct ChampDef{
     std::vector <Trait> ChampTraits;
 };
 struct ChampState{
-    const ChampDef& def;
+    ChampDef def;
     GridPos pos = GridPos(0,0);
     ChampState* enemytarget=nullptr;
     float lastautoattacktime = 0.0f;
@@ -50,9 +50,6 @@ struct ChampState{
         ap_current = def.ap[star];
         attackspeed_current = def.attackspeed[star];
     }
-    ChampState operator=(const ChampState& other){
-        return ChampState(other.def, other.star);
-    }
 };
 inline std::unordered_map<std::string, TargetingMethod> TARGETING_POOL{
     {"LowestHP",     TargetingMethod::LowestHP},
@@ -63,6 +60,7 @@ inline std::unordered_map<std::string, const ChampDef*> CHAMP_POOL;
 enum class GameState{Planning, Combat, End};
 inline GameState GamePhase = GameState::Planning;
 void LoadChampions();
+inline std::string EndMsg;
 ChampState CreateChampion(std::string name, int star);
 inline std::vector<ChampState> Team1;
 inline std::vector<ChampState> Team2;

@@ -21,3 +21,4 @@ void Decelerate();
 void DrawChampionTray(int Width, int Height);
 void DrawPlanning(int Width, int Height);
 void DrawCombat(int Width, int Height);
+void DrawEnd(int Width, int Height);
