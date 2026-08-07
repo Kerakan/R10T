@@ -59,11 +59,6 @@ void AddTraits(){
     for (ChampState& c: Team2) c.hp_max = c.hp_current;
 }
 void ApplyTraits(){
-     for (ChampState& champion: Team1){
-        for(Trait trait: champion.def.ChampTraits){
-            TraitDef* t = TRAIT_POOL.at(trait);
-        }
-    }
     //Now we apply the effects
     for (ChampState& champion: Team1){
         for(Trait trait: champion.def.ChampTraits){
@@ -73,11 +68,6 @@ void ApplyTraits(){
         }
     }
     Log("Team 1 traits activated");
-    for (ChampState& champion: Team2){
-        for(Trait trait: champion.def.ChampTraits){
-            TraitDef* t = TRAIT_POOL.at(trait);
-        }
-    }
     //Now we apply the effects
     for (ChampState& champion: Team2){
         for(Trait trait: champion.def.ChampTraits){
@@ -96,8 +86,6 @@ bool is_empty(std::vector<ChampState> Team){
         if(!c.is_dead) return false;
     }
     return true;
-}
-void end_combat(){
 }
 void run_combat(float DeltaTime) {
     if (!combat_started) return;
@@ -151,11 +139,11 @@ void run_combat(float DeltaTime) {
         }
     }
     if (is_empty(Team2)) {
-        std::cout << "Team 1 wins!\n";
-        end_combat();
+        EndMsg = "Team 1 wins!";
+        GamePhase = GameState::End;
     }
     if (is_empty(Team1)) {
-        std::cout << "Team 2 wins!\n";
-        end_combat();
+        EndMsg = "Team 2 wins!";
+        GamePhase = GameState::End;
     }
 }

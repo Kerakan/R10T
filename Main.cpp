@@ -29,13 +29,12 @@ int main(){
 				run_combat(Fixed_dt);
 				accumulator -= Fixed_dt;
 			}	
-			BeginDrawing();	
 			DrawCombat(Width, Height);
 			if(IsKeyDown(KEY_A)) Accelerate();
 			if(IsKeyDown(KEY_D)) Decelerate();   
 		}
 		else if(GamePhase == GameState::End){
-			
+			DrawEnd(Width,Height);
 		}
 		EndDrawing();
 	}

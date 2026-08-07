@@ -9,7 +9,37 @@
 #include "Combat.h"
 #include "Draw.h"
 #include <algorithm>
-void DrawDamage(){
+
+// ---------------------------------------------------------------------------
+// Resolution scaling
+// ---------------------------------------------------------------------------
+// The layout below was originally designed at BASE_WIDTH x BASE_HEIGHT
+// (the hex grid was centered at 750,537.5 -> half of 1500 x 1075).
+// Every pixel value that isn't already derived from the live Width/Height
+// parameters is now multiplied by GetUIScale(), and the hex-grid origin is
+// tied to the actual screen center, so the whole layout scales and
+// re-centers cleanly at any resolution (including portrait, e.g. 1080x1920).
+constexpr float BASE_WIDTH = 1500.0f;
+constexpr float BASE_HEIGHT = 1075.0f;
+
+inline float GetUIScale(int Width, int Height){
+    return std::min(Width / BASE_WIDTH, Height / BASE_HEIGHT);
+}
+
+// Extra downward shift (in design-space pixels) so the hex grid clears the
+// Team 1 / Team 2 buttons sitting above it.
+constexpr float GRID_Y_OFFSET = 45.0f;
+
+// Centered-text helper, matching the pattern already used in DrawEnd:
+// horizontally centers `text` on `centerX`, top of the text at `topY`.
+inline void DrawCenteredText(const std::string& text, float centerX, float topY, int fontSize, Color color){
+    DrawText(text.c_str(), centerX - MeasureText(text.c_str(), fontSize) / 2, topY, fontSize, color);
+}
+
+void DrawDamage(int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    float originX = 750 * scale;
+    float originY = (537.5f + GRID_Y_OFFSET) * scale;
     float current_time = seconds_in_combat;
     int size = TimedTexts.size();
     for (int i = 0; i<size ; i++){
@@ -17,54 +47,72 @@ void DrawDamage(){
             continue;
         }
         std::string text = TimedTexts[i].text + " DMG";
-        DrawText(text.c_str(), 750 + 75 * (TimedTexts[i].q * sqrt(3) + TimedTexts[i].r * sqrt(3)/2) + 60, 537.5 + TimedTexts[i].r * 112.5 - 20, 12, RED);
+        float cx = originX + 75 * scale * (TimedTexts[i].q * sqrt(3) + TimedTexts[i].r * sqrt(3)/2) + 60 * scale;
+        float cy = originY + TimedTexts[i].r * 112.5f * scale - 20 * scale;
+        DrawText(text.c_str(), cx, cy, std::max(1, int(12 * scale)), RED);
     }
 }
 void DrawInterfaceBackGround(int width, int height){
+    float scale = GetUIScale(width, height);
     ClearBackground(BLACK);
-    DrawText("Press A/D to Accelerate/Decelerate", 10, height-30, 20, WHITE);
-    DrawFPS(width-100,20);
+    DrawText("Press A/D to Accelerate/Decelerate", 10 * scale, height - 30 * scale, std::max(1, int(20 * scale)), WHITE);
+    DrawFPS(width - 100 * scale, 20 * scale);
 };
 void DrawSecondsInCombat(int width, int height, int seconds){
-    DrawRectangleLines((width/2)-150, height-150, 300, 150, WHITE);
-    DrawRectangle((width/2)-149, height-149, 298, 148, YELLOW);
-    DrawText(std::to_string(seconds).c_str(),(width/2)-20,(height-100),50,WHITE);
+    float scale = GetUIScale(width, height);
+    float w = 300 * scale;
+    float h = 150 * scale;
+    float x = (width / 2.0f) - w / 2.0f;
+    float y = height - h;
+    DrawRectangleLines(x, y, w, h, WHITE);
+    DrawRectangle(x + 1, y + 1, w - 2, h - 2, YELLOW);
+    DrawCenteredText(std::to_string(seconds), width / 2.0f, y + h / 2.0f - 25 * scale, std::max(1, int(50 * scale)), WHITE);
 }
 void DrawStartButton(int width, int height){
     if (!combat_started){
-        DrawRectangleLines((width/2)-150, height-150, 300, 150, WHITE);
-        DrawRectangle((width/2)-149, height-149, 298, 148, BLUE);
-        DrawText("START",(width/2)-85,(height-100),50,WHITE);
+        float scale = GetUIScale(width, height);
+        float w = 300 * scale;
+        float h = 150 * scale;
+        float x = (width / 2.0f) - w / 2.0f;
+        float y = height - h;
+        DrawRectangleLines(x, y, w, h, WHITE);
+        DrawRectangle(x + 1, y + 1, w - 2, h - 2, SKYBLUE);
         Vector2 MousePos = GetMousePosition();
-        Rectangle btnBounds = {(width/2)-150, height-150, 300, 150};
+        Rectangle btnBounds = {x, y, w, h};
         if (CheckCollisionPointRec(MousePos,btnBounds)){
+            DrawRectangle(x + 1, y + 1, w - 2, h - 2, BLUE);
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                 combat_started = true;
                 GamePhase = GameState::Combat;
                 ApplyTraits();
             }
         }
+        DrawCenteredText("START", width / 2.0f, y + h / 2.0f - 25 * scale, std::max(1, int(50 * scale)), WHITE);
     }
 }
-void DrawHexagon(Vector2 center,Color color){
-    DrawPolyLines(center,6,75,90,color);
+void DrawHexagon(Vector2 center, float radius, Color color){
+    DrawPolyLines(center, 6, radius, 90, color);
 }
 void DrawGrid(int width, int height){
+    float scale = GetUIScale(width, height);
+    float originX = 750 * scale;
+    float originY = (537.5f + GRID_Y_OFFSET) * scale;
+    float hexRadius = 75 * scale;
     //Draw the board converting axial coordinates to pixels:
     for (GridPos H : GridTeam2){
         int q = H.q;
         int r = H.r;
-        Vector2 c={750 + 75 * (q * sqrt(3) + r * sqrt(3)/2), 537.5 + r * 112.5};
-        DrawHexagon(c,YELLOW);
+        Vector2 c={originX + hexRadius * (q * sqrt(3) + r * sqrt(3)/2), originY + r * 112.5f * scale};
+        DrawHexagon(c, hexRadius, YELLOW);
     }
     for (GridPos H : GridTeam1){
         int q = H.q;
         int r = H.r;
-        Vector2 c={750 + 75 * (q * sqrt(3) + r * sqrt(3)/2), 537.5 + r * 112.5};
-        DrawHexagon(c,RED);
+        Vector2 c={originX + hexRadius * (q * sqrt(3) + r * sqrt(3)/2), originY + r * 112.5f * scale};
+        DrawHexagon(c, hexRadius, RED);
     }
 }
-void DrawHealthBar(int Cx, int Cy, int rad,ChampState& champion){
+void DrawHealthBar(int Cx, int Cy, int rad, ChampState& champion, float scale){
     //Draw the outline of the hp bar
     float w = 2 * rad;
     float l = rad *(1.0f/4);
@@ -75,11 +123,16 @@ void DrawHealthBar(int Cx, int Cy, int rad,ChampState& champion){
     //DrawShield
     float shield_mult = std::max(champion.current_shield/champion.hp_max,0.0f);
     DrawRectangle(Cx-rad+1+(w - 2)*hp_mult,Cy+rad+1,  (w - 2)*hp_mult*shield_mult, l - 2, WHITE);
-    //Now We Show Health in Numbers
+    //Now We Show Health in Numbers, centered under the bar
     std::string health = std::to_string(int(champion.hp_current)) + "/" + std::to_string(int(champion.hp_max));
-    DrawText(health.c_str(),Cx + w - 105, Cy + l + 40, 10, WHITE);
+    DrawCenteredText(health, Cx, Cy + l + 40 * scale, std::max(1, int(10 * scale)), WHITE);
 }
-void DrawChampions(std::vector<ChampState>& Team, int TeamNumber){
+void DrawChampions(std::vector<ChampState>& Team, int TeamNumber, int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    float originX = 750 * scale;
+    float originY = (537.5f + GRID_Y_OFFSET) * scale;
+    float hexRadius = 75 * scale;
+    float champRadius = 50 * scale;
     Color drawcolor;
     if (TeamNumber == 1) drawcolor = RED;
     else if (TeamNumber == 2) drawcolor = YELLOW;
@@ -88,41 +141,43 @@ void DrawChampions(std::vector<ChampState>& Team, int TeamNumber){
         std::string name = Champ.def.name;
         int q = Champ.pos.q;
         int r = Champ.pos.r;
-        Vector2 c= {750 + 75 * (q * sqrt(3) + r * sqrt(3)/2), 537.5 + r * 112.5};
-        DrawCircleLinesV(c, 50, drawcolor);
-        DrawText(name.c_str(), 750 + 75 * (q * sqrt(3) + r * sqrt(3)/2) - 25, 537.5 + r * 112.5 - 12.5, 20, WHITE);
-        DrawHealthBar(c.x , c.y, 50, Champ);
+        Vector2 c= {originX + hexRadius * (q * sqrt(3) + r * sqrt(3)/2), originY + r * 112.5f * scale};
+        DrawCircleLinesV(c, champRadius, drawcolor);
+        DrawCenteredText(name, c.x, c.y - 12.5f * scale, std::max(1, int(20 * scale)), WHITE);
+        DrawHealthBar(c.x , c.y, champRadius, Champ, scale);
     }
 }
-void DrawTraitsSkeleton(){
-    DrawText("Team 2 Traits", 100, 100, 25, YELLOW);
-    DrawLine(50,500,150,500, WHITE);
-    DrawText("Team 1 Traits", 100, 550, 25, RED);
+void DrawTraitsSkeleton(int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    DrawText("Team 2 Traits", 100 * scale, 100 * scale, std::max(1, int(25 * scale)), YELLOW);
+    DrawLine(50 * scale, 500 * scale, 150 * scale, 500 * scale, WHITE);
+    DrawText("Team 1 Traits", 100 * scale, 550 * scale, std::max(1, int(25 * scale)), RED);
 }
-void DrawTraits(int position, std::vector<ChampState> &Team, std::vector<TraitDef*> TraitsInTeam){
-    DrawTraitsSkeleton();
+void DrawTraits(int position, std::vector<ChampState> &Team, std::vector<TraitDef*> TraitsInTeam, int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    DrawTraitsSkeleton(Width, Height);
     int i = 1;
     for (TraitDef* trait: TraitsInTeam){
         if (trait->name != "Celestials"){
             if (position == 1){
                 std::string text = trait->name+ " " + std::to_string(trait->numchampsT1);
                 if (trait->numchampsT1 >= trait->thresholds[1]){
-                    DrawText(text.c_str(), 100, 550 + 75*i, 20, GOLD);
+                    DrawText(text.c_str(), 100 * scale, (550 + 75*i) * scale, std::max(1, int(20 * scale)), GOLD);
                     i++;
                 }
                 else if (trait->numchampsT1 >= trait->thresholds[0]){
-                    DrawText(text.c_str(), 100, 550 + 75*i, 20, LIGHTGRAY);
+                    DrawText(text.c_str(), 100 * scale, (550 + 75*i) * scale, std::max(1, int(20 * scale)), LIGHTGRAY);
                     i++;
                 }
             }
             else if (position == 0){
                 std::string text = trait->name+ " " + std::to_string(trait->numchampsT2);
                 if (trait->numchampsT2 >= trait->thresholds[1]){
-                    DrawText(text.c_str(), 100, 100 + 75*i, 20, GOLD);
+                    DrawText(text.c_str(), 100 * scale, (100 + 75*i) * scale, std::max(1, int(20 * scale)), GOLD);
                     i++;
                 }
                 else if (trait->numchampsT2 >= trait->thresholds[0]){
-                    DrawText(text.c_str(), 100, 100 + 75*i, 20, LIGHTGRAY);
+                    DrawText(text.c_str(), 100 * scale, (100 + 75*i) * scale, std::max(1, int(20 * scale)), LIGHTGRAY);
                     i++;
                 }
             }
@@ -131,14 +186,14 @@ void DrawTraits(int position, std::vector<ChampState> &Team, std::vector<TraitDe
             if (position == 1){
                 std::string text = trait->name+ " " + std::to_string(trait->numchampsT1);
                 if (trait->numchampsT1 >= trait->thresholds[0]){
-                    DrawText(text.c_str(), 100, 550 + 75*i, 20, SKYBLUE);
+                    DrawText(text.c_str(), 100 * scale, (550 + 75*i) * scale, std::max(1, int(20 * scale)), SKYBLUE);
                     i++;
                 }
             }
             else if (position == 0){
                 std::string text = trait->name+ " " + std::to_string(trait->numchampsT2);
                 if (trait->numchampsT2 >= trait->thresholds[1]){
-                    DrawText(text.c_str(), 100, 100 + 75*i, 20, SKYBLUE);
+                    DrawText(text.c_str(), 100 * scale, (100 + 75*i) * scale, std::max(1, int(20 * scale)), SKYBLUE);
                     i++;
                 }
             }
@@ -146,18 +201,22 @@ void DrawTraits(int position, std::vector<ChampState> &Team, std::vector<TraitDe
     }
 }
 void DrawConsoleLog(int width, int height){
-    int size = 15;
-    int max_lines = 390/20;
-    int height_start = height - 395;
-    int width_start = (width - 600) + 5;
+    float scale = GetUIScale(width, height);
+    int fontSize = std::max(1, int(15 * scale));
+    int lineHeight = std::max(1, int(20 * scale));
+    float boxW = 600 * scale;
+    float boxH = 400 * scale;
+    int max_lines = int(boxH * 0.975f) / lineHeight; // ~390/20 ratio preserved
+    float height_start = height - boxH * 0.9875f;    // ~395/400 ratio preserved
+    float width_start = (width - boxW) + 5 * scale;
     int textsstart = 0;
     int texts = LogTxts.size();
     if (texts >= max_lines){
         textsstart = texts-max_lines;
     }
-    DrawRectangleLines((width-600), height - 400, 600, 400, WHITE);
+    DrawRectangleLines(width - boxW, height - boxH, boxW, boxH, WHITE);
     for (int i = textsstart; i<texts; i++){
-        DrawText(LogTxts[i].c_str(), width_start, height_start + (i-textsstart)*20, size, WHITE);
+        DrawText(LogTxts[i].c_str(), width_start, height_start + (i-textsstart)*lineHeight, fontSize, WHITE);
     }
 }
 void Accelerate(){
@@ -181,74 +240,92 @@ void Decelerate(){
     }
 }
 void DrawChampionTray(int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    float trayW = 800 * scale;
     std::vector<std::string> Champions = {"Asura", "Takeshi", "Orion", "Delphinus", "Vesper", "Sable", "Akira", "Dante", "Draco", "Andromeda", "Thanatos", "Cassian", "Totom", "Lyra", "Hades", "Solarix", "Goliath"};
-    DrawRectangleLines(Width-800, 0, 800, 600, WHITE);
+    DrawRectangleLines(Width-trayW, 0, trayW, 600 * scale, WHITE);
     Vector2 MousePos = GetMousePosition();
     for (int i = 0; i<5; i++){
         for (int j = 0; j<3; j++){
             std::string Champion = Champions[i*3+j];
-            DrawRectangleLines(Width-800 + j*(800/3.0f), 0 + 100*i, (800/3.0f), 100, WHITE);
-            Rectangle btnBounds = {Width-800 + j*(800/3.0f), 0 + 100*i, (800/3.0f), 100};
+            float cellW = trayW / 3.0f;
+            float cellH = 100 * scale;
+            float cellX = Width - trayW + j * cellW;
+            float cellY = i * cellH;
+            DrawRectangleLines(cellX, cellY, cellW, cellH, WHITE);
+            Rectangle btnBounds = {cellX, cellY, cellW, cellH};
             if (CheckCollisionPointRec(MousePos,btnBounds)){
-                DrawRectangle(Width-799 + j*(800/3.0f),1 + 100*i, (800/3.0f) -2 , 98, SKYBLUE);
+                DrawRectangle(cellX + 1, cellY + 1, cellW - 2, cellH - 2, SKYBLUE);
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                     SelectedChampPtr = &CHAMP_STORAGE[Champion];
                     Log("Selected Champion " + Champion);
                 }
             }
             if (SelectedChampPtr != nullptr && SelectedChampPtr->name == Champion){
-                DrawRectangle(Width-799 + j*(800/3.0f),1 + 100*i, (800/3.0f) -2 , 98, GRAY);
+                DrawRectangle(cellX + 1, cellY + 1, cellW - 2, cellH - 2, GRAY);
             }
-            DrawText(Champion.c_str(), Width-800 + j*(800/3.0f) + 100, 0 + 100*i + 20, 15, WHITE);
+            DrawCenteredText(Champion, cellX + cellW / 2.0f, cellY + 20 * scale, std::max(1, int(15 * scale)), WHITE);
             std::vector<Trait> ChampTraits = CHAMP_POOL.at(Champion)->ChampTraits;
             std::string Traits = "Traits: ";
             for (int traitindex = 0; traitindex < ChampTraits.size(); traitindex++){
                 Traits += TRAIT_TRANSFORM_REVERSE.at(ChampTraits[traitindex]);
                 if(!(traitindex == ChampTraits.size() -1)) Traits += " / ";
             }
-            DrawText(Traits.c_str(), Width-800 + j*(800/3.0f) + 25, 0 + 100*i + 80, 12, WHITE);
+            DrawCenteredText(Traits, cellX + cellW / 2.0f, cellY + 80 * scale, std::max(1, int(12 * scale)), WHITE);
             std::string CostRange = "Cost: " + std::to_string(CHAMP_POOL.at(Champion)->cost) + " / Range: " + std::to_string(CHAMP_POOL.at(Champion)->range);
-            DrawText(CostRange.c_str(), Width-800 + j*(800/3.0f) + 75, 0 + 100*i + 50, 12, WHITE);
+            DrawCenteredText(CostRange, cellX + cellW / 2.0f, cellY + 50 * scale, std::max(1, int(12 * scale)), WHITE);
         }
     }
     for (int i = 0; i<2; i++){
         std::string Champion = Champions[15+i];
-        DrawRectangleLines(Width-800 + i * (400), 500, 400, 100, WHITE);
-        Rectangle btnBounds = {Width-800 + i * (400), 500, 400, 100};
+        float cellW = trayW / 2.0f;
+        float cellH = 100 * scale;
+        float cellX = Width - trayW + i * cellW;
+        float cellY = 500 * scale;
+        DrawRectangleLines(cellX, cellY, cellW, cellH, WHITE);
+        Rectangle btnBounds = {cellX, cellY, cellW, cellH};
         if (CheckCollisionPointRec(MousePos,btnBounds)){
-            DrawRectangle(Width-799 + i * (400), 501, 398, 98, SKYBLUE);
+            DrawRectangle(cellX + 1, cellY + 1, cellW - 2, cellH - 2, SKYBLUE);
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                 SelectedChampPtr = &CHAMP_STORAGE[Champion];
                 Log("Selected Champion " + Champion);
             }
         }
-            if (SelectedChampPtr != nullptr && SelectedChampPtr->name == Champion){
-                DrawRectangle(Width-799 + i * (400), 501, 398, 98, GRAY);
-            }
-        DrawText(Champion.c_str(), Width-800 + i * (400) + 150, 520, 16, WHITE);
+        if (SelectedChampPtr != nullptr && SelectedChampPtr->name == Champion){
+            DrawRectangle(cellX + 1, cellY + 1, cellW - 2, cellH - 2, GRAY);
+        }
+        DrawCenteredText(Champion, cellX + cellW / 2.0f, cellY + 20 * scale, std::max(1, int(16 * scale)), WHITE);
         std::vector<Trait> ChampTraits = CHAMP_POOL.at(Champion)->ChampTraits;
-            std::string Traits = "Traits: ";
-            for (int traitindex = 0; traitindex < ChampTraits.size(); traitindex++){
-                Traits += TRAIT_TRANSFORM_REVERSE.at(ChampTraits[traitindex]);
-                if(!(traitindex == ChampTraits.size() -1)) Traits += " / ";
-            }
-        DrawText(Traits.c_str(), Width-800 + i * 400 + 100, 500 + 80, 13, WHITE);
+        std::string Traits = "Traits: ";
+        for (int traitindex = 0; traitindex < ChampTraits.size(); traitindex++){
+            Traits += TRAIT_TRANSFORM_REVERSE.at(ChampTraits[traitindex]);
+            if(!(traitindex == ChampTraits.size() -1)) Traits += " / ";
+        }
+        DrawCenteredText(Traits, cellX + cellW / 2.0f, cellY + 80 * scale, std::max(1, int(13 * scale)), WHITE);
         std::string CostRange = "Cost: " + std::to_string(CHAMP_POOL.at(Champion)->cost) + " / Range: " + std::to_string(CHAMP_POOL.at(Champion)->range);
-        DrawText(CostRange.c_str(), Width-800 + i * 400 + 125, 500 + 50, 13, WHITE);
+        DrawCenteredText(CostRange, cellX + cellW / 2.0f, cellY + 50 * scale, std::max(1, int(13 * scale)), WHITE);
     }
 }
-void DrawValidHexes(std::vector<GridPos>& TeamGrid){
+void DrawValidHexes(std::vector<GridPos>& TeamGrid, int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    float originX = 750 * scale;
+    float originY = (537.5f + GRID_Y_OFFSET) * scale;
+    float hexRadius = 75 * scale;
     for (GridPos& H : TeamGrid){
         int q = H.q;
         int r = H.r;
-        Vector2 c={750 + 75 * (q * sqrt(3) + r * sqrt(3)/2), 537.5 + r * 112.5};
-        DrawPoly(c, 6, 73, 90, LIGHTGRAY);
+        Vector2 c={originX + hexRadius * (q * sqrt(3) + r * sqrt(3)/2), originY + r * 112.5f * scale};
+        DrawPoly(c, 6, 73 * scale, 90, LIGHTGRAY);
     }
 }
-void ChooseHex(std::vector<GridPos>& TeamGrid){
+void ChooseHex(std::vector<GridPos>& TeamGrid, int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    float originX = 750 * scale;
+    float originY = (537.5f + GRID_Y_OFFSET) * scale;
+    float hexRadius = 75 * scale;
     Vector2 MousePos = GetMousePosition();
-    float Mouseq = sqrt(3)/3.0f * ((MousePos.x - 750)/75) - (1.0f/3) * ((MousePos.y - 537.5)/75);
-    float Mouser = (2.0f/3) * ((MousePos.y - 537.5)/75);
+    float Mouseq = sqrt(3)/3.0f * ((MousePos.x - originX)/hexRadius) - (1.0f/3) * ((MousePos.y - originY)/hexRadius);
+    float Mouser = (2.0f/3) * ((MousePos.y - originY)/hexRadius);
     float sfloat = -Mouseq - Mouser;
     int q = std::round(Mouseq);
     int r = std::round(Mouser);
@@ -274,12 +351,12 @@ void ChooseHex(std::vector<GridPos>& TeamGrid){
     for (GridPos& H : TeamGrid){
         int q = H.q;
         int r = H.r;
-        Vector2 c={750 + 75 * (q * sqrt(3) + r * sqrt(3)/2), 537.5 + r * 112.5};
+        Vector2 c={originX + hexRadius * (q * sqrt(3) + r * sqrt(3)/2), originY + r * 112.5f * scale};
         if(H.is_occupied){
-            DrawPoly(c, 6, 73, 90, DARKGRAY);
+            DrawPoly(c, 6, 73 * scale, 90, DARKGRAY);
         }
         if(q==qfinal && r==rfinal){
-            DrawPoly(c, 6, 73, 90, SKYBLUE);
+            DrawPoly(c, 6, 73 * scale, 90, SKYBLUE);
             if (!H.is_occupied){
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                     if(!(SelectedChampPtr == nullptr)) {
@@ -315,21 +392,26 @@ void ChooseHex(std::vector<GridPos>& TeamGrid){
     }
 }
 void DrawTeamSelectButtons(int Width, int Height){
+    float scale = GetUIScale(Width, Height);
     Vector2 MousePos = GetMousePosition();
+    float btnW = 200 * scale;
+    float btnH = 125 * scale;
+    float centerX = 750 * scale; // align with hex grid origin, not full window width
     for (int i = 0; i<2; i++){
-        DrawRectangleLines((Width/2) - 400 + i*200, 0, 200, 125, WHITE);
-        Rectangle btnBounds = {(Width/2) - 400 + i*200, 0, 200, 125};
+        float x = centerX - btnW + i*btnW;
+        DrawRectangleLines(x, 0, btnW, btnH, WHITE);
+        Rectangle btnBounds = {x, 0, btnW, btnH};
         if (CheckCollisionPointRec(MousePos,btnBounds)){
-            DrawRectangle((Width / 2) - 400 + i * 200 + 1, 1, 198, 123, SKYBLUE);
+            DrawRectangle(x + 1, 1, btnW - 2, btnH - 2, SKYBLUE);
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                 Editing = i+1;
             }
         }
         if (Editing == (i + 1)) {
-            DrawRectangle((Width / 2) - 400 + i * 200 + 1, 1, 198, 123, GRAY);
+            DrawRectangle(x + 1, 1, btnW - 2, btnH - 2, GRAY);
         }
         std::string text = "Team " + std::to_string(i+1);
-        DrawText(text.c_str(), (Width/2) - 400 + i*200 + 50, 50, 25, WHITE);
+        DrawCenteredText(text, x + btnW / 2.0f, 50 * scale, std::max(1, int(25 * scale)), WHITE);
     }
 }
 void DrawPlanning(int Width, int Height){
@@ -340,29 +422,33 @@ void DrawPlanning(int Width, int Height){
     DrawTeamSelectButtons(Width, Height);
     DrawStartButton(Width, Height);
     if (Editing == 1){
-        DrawValidHexes(GridTeam1);
-        ChooseHex(GridTeam1);
+        DrawValidHexes(GridTeam1, Width, Height);
+        ChooseHex(GridTeam1, Width, Height);
     }
     else if (Editing == 2){
-        DrawValidHexes(GridTeam2);
-        ChooseHex(GridTeam2);
+        DrawValidHexes(GridTeam2, Width, Height);
+        ChooseHex(GridTeam2, Width, Height);
     }
-    DrawChampions(Team1, 1);
-    DrawChampions(Team2, 2);
-    DrawTraits(1,Team1,TraitsInTeam1);
-    DrawTraits(0,Team2,TraitsInTeam2);
+    DrawChampions(Team1, 1, Width, Height);
+    DrawChampions(Team2, 2, Width, Height);
+    DrawTraits(1,Team1,TraitsInTeam1, Width, Height);
+    DrawTraits(0,Team2,TraitsInTeam2, Width, Height);
 }
 void DrawCombat(int Width, int Height){
     DrawInterfaceBackGround(Width,Height);
-    DrawTraits(1,Team1,TraitsInTeam1);
-    DrawTraits(0,Team2,TraitsInTeam2);
+    DrawTraits(1,Team1,TraitsInTeam1, Width, Height);
+    DrawTraits(0,Team2,TraitsInTeam2, Width, Height);
     DrawSecondsInCombat(Width, Height, int(seconds_in_combat));
     DrawConsoleLog(Width,Height);
-    DrawDamage();
+    DrawDamage(Width, Height);
     DrawGrid(Width,Height);
-    DrawChampions(Team1, 1);
-    DrawChampions(Team2, 2);
+    DrawChampions(Team1, 1, Width, Height);
+    DrawChampions(Team2, 2, Width, Height);
 }
+void DrawEndButtons(){}
 void DrawEnd(int Width, int Height){
     DrawInterfaceBackGround(Width,Height);
+    float scale = GetUIScale(Width, Height);
+    int fontSize = std::max(1, int(100 * scale));
+    DrawCenteredText(EndMsg, Width/2.0f, Height/2.0f - 100 * scale, fontSize, WHITE);
 }

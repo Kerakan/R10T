@@ -1,11 +1,14 @@
 #pragma once
+#include <iostream>
 #include <unordered_map>
 #include <string>
 #include "json.hpp"
+#include "raylib.h"
 #include <fstream>
 #include "Traits.h"
 void LoadTraits() {
-    std::ifstream f("data/Traits.json");
+    std::string path = "data/Traits.json";
+    std::ifstream f(path);
     nlohmann::json data = nlohmann::json::parse(f);
     for (auto& t : data) {
         TraitDef* trait = new TraitDef();

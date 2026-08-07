@@ -9,7 +9,8 @@
 #include "Traits.h"
 #include "Champ.h"
 void LoadChampions() {
-    std::ifstream f("data/ChampionPool.json");
+    std::string path = "data/ChampionPool.json";
+    std::ifstream f(path);
     nlohmann::json cdata = nlohmann::json::parse(f);
     for (auto& c : cdata) {
         ChampDef def;
