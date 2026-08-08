@@ -445,9 +445,54 @@ void DrawCombat(int Width, int Height){
     DrawChampions(Team1, 1, Width, Height);
     DrawChampions(Team2, 2, Width, Height);
 }
-void DrawEndButtons(){}
+void DrawEndButtons(int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    Vector2 MousePos = GetMousePosition();
+    float btnW = 400 * scale;
+    float btnH = 150 * scale;
+    float centerX = Width / 2.0f;
+    float centerY = Height / 2.0f + 100 * scale;
+    //Draw Retry Button
+    float x = centerX - btnW - 100 * scale;
+    float y = centerY;
+    Rectangle btnBounds = {x, y, btnW, btnH};
+    DrawRectangleLines(x, y, btnW, btnH, WHITE);
+    if (CheckCollisionPointRec(MousePos,btnBounds)){
+        DrawRectangle(x + 1, y + 1, btnW - 2, btnH - 2, LIGHTGRAY);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            Team1.clear();
+            Team2.clear();
+            TraitsInTeam1.clear();
+            TraitsInTeam2.clear();
+            for (GridPos& H : GridTeam1){
+                H.is_occupied = false;
+            }
+            for (GridPos& H : GridTeam2){
+                H.is_occupied = false;
+            }
+            Editing = 1;
+            SelectedChampPtr = nullptr;
+            GamePhase = GameState::Planning;
+            LogTxts.clear();
+            Log("Game Reset");
+        }
+    }
+    DrawCenteredText("CHOOSE AGAIN", x + btnW / 2.0f, y + btnH / 2.0f - 25 * scale, std::max(1, int(50 * scale)), WHITE);
+    //Draw Exit Button
+    x = centerX + 100 * scale;
+    btnBounds = {x, y, btnW, btnH};
+    DrawRectangleLines(x, y, btnW, btnH, WHITE);
+    if (CheckCollisionPointRec(MousePos,btnBounds)){
+        DrawRectangle(x + 1, y + 1, btnW - 2, btnH - 2, LIGHTGRAY);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            CloseWindow();
+        }
+    }
+    DrawCenteredText("EXIT", x + btnW / 2.0f, y + btnH / 2.0f - 25 * scale, std::max(1, int(50 * scale)), WHITE);
+}
 void DrawEnd(int Width, int Height){
     DrawInterfaceBackGround(Width,Height);
+    DrawEndButtons(Width, Height);
     float scale = GetUIScale(Width, Height);
     int fontSize = std::max(1, int(100 * scale));
     DrawCenteredText(EndMsg, Width/2.0f, Height/2.0f - 100 * scale, fontSize, WHITE);

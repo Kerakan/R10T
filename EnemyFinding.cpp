@@ -17,42 +17,57 @@ std::vector<GridPos> neighbours(GridPos pos){
     result.push_back(GridPos(pos.q - 1, pos.r + 1));
     return result;
 };
-void MoveCloser(ChampState &champ, ChampState &target, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam){
-    GridPos startpos = champ.pos;
-    GridPos endpos = target.pos;
-    std::vector<HexNode> possible_moves;
-    GridPos currentmovingpos;
-    int minF = 10000;
-    int minH;
-    //Find the Moves that can be executed
-    for (GridPos move: neighbours(champ.pos)){
-        if (std::find(GridTeam1.begin(),GridTeam1.end(),move)!=GridTeam1.end() or std::find(GridTeam2.begin(),GridTeam2.end(),move)!=GridTeam2.end() and !(move.is_occupied)){
-            possible_moves.push_back(HexNode(move));
+std::vector<GridPos> AStar(GridPos start, GridPos end, int range){
+    std::vector<HexNode> openlist;
+    std::vector<HexNode> closedlist;
+    HexNode startnode(start);
+    HexNode endnode(end);
+    startnode.G = 0;
+    std::vector<GridPos> path;
+    openlist.push_back(startnode);
+    while (!openlist.empty()){
+        HexNode current = openlist.front();
+        openlist.erase(openlist.begin());
+        closedlist.push_back(current);
+        if (distance(current.pos, end) <= range){
+            Log("Path has been found");
+            path = {};
+            while (current.parent->pos != start){
+                path.push_back(current.parent->pos);
+                current = *current.parent;
+            }
+            std::reverse(path.begin(), path.end());
+            return path;
         }
-    }
-    //Apply the values for the A* pathfinding
-    for (HexNode& move: possible_moves){
-        move.G = 1;
-        move.H = distance(move.pos, endpos);
-        move.F = move.H + move.G;
-    }
-    //Find the best hex to move to
-    for (HexNode& move: possible_moves){
-        if (move.F < minF){
-            int minH = move.H;
-            currentmovingpos = move.pos;
-        }
-        else if(move.F == minF){
-            if (move.H < minH){
-                minH = move.H;
-                minF = move.F;
-                currentmovingpos = move.pos;
+        std::vector<GridPos> possible_moves = neighbours(current.pos);
+        HexNode nextmove(GridPos(0, 0));
+        int minF = 1000;
+        for (GridPos& move: possible_moves){
+            if (move.is_occupied or std::find(closedlist.begin(), closedlist.end(), move) != closedlist.end()) continue;
+            HexNode node(move);
+            node.parent = &current;
+            node.G = current.G + 1;
+            node.H = distance(move,end);
+            node.F = node.G + node.H;
+            if (node.F == minF){
+                if (node.H <  nextmove.H){
+                    nextmove = node;
+                }
+            }
+            else if (node.F < minF){
+                minF = node.F;
+                nextmove = node;
             }
         }
+        openlist.push_back(nextmove);
     }
-    if (distance(currentmovingpos, endpos) < distance(startpos,endpos)){
-        champ.pos.is_occupied = false;
-        champ.pos = currentmovingpos;
+    return {};
+}
+void MoveCloser(ChampState &champ, ChampState &target, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam){
+    std::vector<GridPos> path = AStar(champ.pos, target.pos, champ.range);
+    if(!path.empty()){
+        GridPos pos = path[0];
+        champ.pos = pos;
     }
 };
 void FindClosestEnemy(ChampState &Champ, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam){

@@ -22,7 +22,7 @@ int main(){
 			DrawPlanning(Width,Height);
 		}
 		else if(GamePhase == GameState::Combat){
-			DisableCursor();
+			HideCursor();
 			float dt = GetFrameTime();
 			accumulator += dt;
 			if (accumulator >= Fixed_dt){
@@ -34,6 +34,7 @@ int main(){
 			if(IsKeyDown(KEY_D)) Decelerate();   
 		}
 		else if(GamePhase == GameState::End){
+			ShowCursor();
 			DrawEnd(Width,Height);
 		}
 		EndDrawing();
