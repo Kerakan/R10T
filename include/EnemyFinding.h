@@ -4,7 +4,7 @@
 #include "Champ.h"
 #include "Grid.h"
 struct HexNode{
-    GridPos parent;
+    HexNode* parent = nullptr;
     GridPos pos;
     int G;
     int H;
@@ -12,5 +12,6 @@ struct HexNode{
     HexNode(GridPos pos): pos(pos){};
 };
 std::vector<GridPos> neighbours(GridPos pos);
+std::vector<GridPos> AStar(GridPos start, GridPos end, int range);
 void MoveCloser(ChampState &champ, ChampState &target, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam);
 void FindClosestEnemy(ChampState &Champ, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam);

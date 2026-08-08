@@ -5,7 +5,7 @@
 inline int Editing = 1;
 inline ChampDef* SelectedChampPtr = nullptr;
 inline GridPos ChampPos;
-void DrawDamage();
+void DrawDamage(int Width, int Height);
 void DrawInterfaceBackGround(int width, int height);
 void DrawSecondsInCombat(int width, int height, int seconds);
 void DrawStartButton(int width, int height);
@@ -21,4 +21,5 @@ void Decelerate();
 void DrawChampionTray(int Width, int Height);
 void DrawPlanning(int Width, int Height);
 void DrawCombat(int Width, int Height);
+void DrawEndButtons(int Width, int Height);
 void DrawEnd(int Width, int Height);
