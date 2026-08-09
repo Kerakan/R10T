@@ -5,6 +5,7 @@
 inline int Editing = 1;
 inline ChampDef* SelectedChampPtr = nullptr;
 inline GridPos ChampPos;
+inline int SelectedStar = 0;
 void DrawDamage(int Width, int Height);
 void DrawInterfaceBackGround(int width, int height);
 void DrawSecondsInCombat(int width, int height, int seconds);

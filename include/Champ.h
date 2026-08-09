@@ -5,6 +5,7 @@
 #include <string>
 #include "Grid.h"
 #include "Traits.h"
+inline float seconds_in_combat = 0.0f;
 enum class TargetingMethod {LowestHP, Closest};
 struct ChampDef{
     std::string name;
@@ -40,6 +41,7 @@ struct ChampState{
     float hp_max = 0;
     float is_invulnerable_until = 0.0f;
     bool is_dead = false;
+    float time_since_lastmove = 0.0f;
     ChampState(const ChampDef& d, int s): def(d), star(s){
         range = def.range;
         hp_current = def.hp[star];
