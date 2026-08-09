@@ -137,6 +137,7 @@ void run_combat(float DeltaTime) {
                 Ability(champion, AllyTeam, EnemyTeam);
                 champion.mana_current = 0;
         }
+        champion.enemytarget = nullptr;
     }
     if (is_empty(Team2)) {
         EndMsg = "Team 1 wins!";

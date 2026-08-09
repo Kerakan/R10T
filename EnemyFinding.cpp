@@ -5,69 +5,90 @@
 #include "Grid.h"
 #include "Log.h"
 #include <algorithm>
+#include <deque>
 #include <string>
 #include "EnemyFinding.h"
-std::vector<GridPos> neighbours(GridPos pos){
-    std::vector<GridPos> result;
-    result.push_back(GridPos(pos.q + 1, pos.r));
-    result.push_back(GridPos(pos.q - 1, pos.r));
-    result.push_back(GridPos(pos.q, pos.r + 1));
-    result.push_back(GridPos(pos.q, pos.r - 1));
-    result.push_back(GridPos(pos.q + 1, pos.r - 1));
-    result.push_back(GridPos(pos.q - 1, pos.r + 1));
+GridPos* findGridPos(GridPos pos){
+    for (GridPos& tile : GridTeam1){
+        if (tile.q == pos.q && tile.r == pos.r) return &tile;
+    }
+    for (GridPos& tile : GridTeam2){
+        if (tile.q == pos.q && tile.r == pos.r) return &tile;
+    }
+    return nullptr;
+}
+std::vector<GridPos*> neighbours(GridPos pos){
+    std::vector<GridPos*> result;
+    GridPos candidates[6] = {
+        GridPos(pos.q + 1, pos.r),
+        GridPos(pos.q - 1, pos.r),
+        GridPos(pos.q, pos.r + 1),
+        GridPos(pos.q, pos.r - 1),
+        GridPos(pos.q + 1, pos.r - 1),
+        GridPos(pos.q - 1, pos.r + 1)
+    };
+    for (GridPos& c : candidates){
+        GridPos* real = findGridPos(c);
+        if (real != nullptr) result.push_back(real);
+    }
     return result;
-};
+}
 std::vector<GridPos> AStar(GridPos start, GridPos end, int range){
     std::vector<HexNode> openlist;
-    std::vector<HexNode> closedlist;
+    std::deque<HexNode> closedlist;
     HexNode startnode(start);
     HexNode endnode(end);
     startnode.G = 0;
     std::vector<GridPos> path;
     openlist.push_back(startnode);
     while (!openlist.empty()){
-        HexNode current = openlist.front();
-        openlist.erase(openlist.begin());
+        auto best = std::min_element(openlist.begin(), openlist.end(),
+            [](const HexNode& a, const HexNode& b){
+                if (a.F != b.F) return a.F < b.F;
+                return a.H < b.H;
+            });
+        HexNode current = *best;
+        openlist.erase(best);
         closedlist.push_back(current);
+        HexNode* currentPtr = &closedlist.back();
         if (distance(current.pos, end) <= range){
             Log("Path has been found");
             path = {};
-            while (current.parent->pos != start){
-                path.push_back(current.parent->pos);
-                current = *current.parent;
+            path.push_back(currentPtr->pos);
+            HexNode* node = currentPtr;
+            while (node->parent != nullptr && !(node->parent->pos == start)){
+                node = node->parent;
+                path.push_back(node->pos);
             }
             std::reverse(path.begin(), path.end());
             return path;
         }
-        std::vector<GridPos> possible_moves = neighbours(current.pos);
+        std::vector<GridPos*> possible_moves = neighbours(current.pos);
         HexNode nextmove(GridPos(0, 0));
         int minF = 1000;
-        for (GridPos& move: possible_moves){
-            if (move.is_occupied or std::find(closedlist.begin(), closedlist.end(), move) != closedlist.end()) continue;
-            HexNode node(move);
-            node.parent = &current;
+        for (GridPos* move: possible_moves){
+            if (move->is_occupied or std::find_if(closedlist.begin(), closedlist.end(), [move](const HexNode& n){ return n.pos == *move; }) != closedlist.end()) continue;
+            HexNode node(*move);
+            node.parent = currentPtr;
             node.G = current.G + 1;
-            node.H = distance(move,end);
+            node.H = distance(*move,end);
             node.F = node.G + node.H;
-            if (node.F == minF){
-                if (node.H <  nextmove.H){
-                    nextmove = node;
-                }
-            }
-            else if (node.F < minF){
-                minF = node.F;
-                nextmove = node;
-            }
+            openlist.push_back(node);
         }
-        openlist.push_back(nextmove);
     }
     return {};
 }
 void MoveCloser(ChampState &champ, ChampState &target, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam){
     std::vector<GridPos> path = AStar(champ.pos, target.pos, champ.range);
-    if(!path.empty()){
+    if(!path.empty() and (seconds_in_combat - champ.time_since_lastmove)>= 0.5f){
+        Log("Champion " + champ.def.name + " is moving closer to enemy " + champ.enemytarget->def.name);
+        GridPos* oldTile = findGridPos(champ.pos);
+        if (oldTile != nullptr) oldTile->is_occupied = false;
         GridPos pos = path[0];
         champ.pos = pos;
+        GridPos* newTile = findGridPos(champ.pos);
+        if (newTile != nullptr) newTile->is_occupied = true;
+        champ.time_since_lastmove = seconds_in_combat;
     }
 };
 void FindClosestEnemy(ChampState &Champ, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam){
@@ -96,12 +117,8 @@ void FindClosestEnemy(ChampState &Champ, std::vector<ChampState> &AllyTeam, std:
             }
         }
     }
-    if (closest_distance<=Champ.range){
-        Log("Champion " + Champ.def.name + " found enemy " + Champ.enemytarget->def.name);
-    }
+    if (closest_distance<=Champ.range) return;
     else{
-        Log("Champion " + Champ.def.name + " is moving closer to enemy " + Champ.enemytarget->def.name);
         MoveCloser(Champ, *Champ.enemytarget, AllyTeam, EnemyTeam);
-        Champ.enemytarget = nullptr;
     }
 }

@@ -364,7 +364,7 @@ void ChooseHex(std::vector<GridPos>& TeamGrid, int Width, int Height){
                         if(currentTeam.size() < 5){
                             ChampPos = H;
                             H.is_occupied = true;
-                            ChampState Champ = CreateChampion(SelectedChampPtr->name, 0);
+                            ChampState Champ = CreateChampion(SelectedChampPtr->name, SelectedStar);
                             Champ.pos = ChampPos;
                             currentTeam.push_back(Champ);
                             Log("Placed Champion " + SelectedChampPtr->name + " at Hex with coordinates q: " + std::to_string(H.q) + " r: " + std::to_string(H.r));
@@ -414,6 +414,38 @@ void DrawTeamSelectButtons(int Width, int Height){
         DrawCenteredText(text, x + btnW / 2.0f, 50 * scale, std::max(1, int(25 * scale)), WHITE);
     }
 }
+void DrawStarSelect(int Width, int Height){
+    float scale = GetUIScale(Width, Height);
+    Vector2 MousePos = GetMousePosition();
+    float btnW = 200 * scale;
+    float btnH = 125 * scale;
+    float consoleLogW = 600 * scale;
+    float consoleLogLeftEdge = Width - consoleLogW;
+    float startBtnW = 300 * scale;
+    float startBtnRightEdge = (Width / 2.0f) + (startBtnW / 2.0f);
+    float gapCenterX = (startBtnRightEdge + consoleLogLeftEdge) / 2.0f;
+    float groupH = btnH * 3.0f;
+    float x = gapCenterX - btnW / 2.0f;
+    float groupTop = Height - groupH;
+    for (int i = 0; i<3; i++){
+        float y = groupTop + i*btnH;
+        DrawRectangleLines(x, y, btnW, btnH, WHITE);
+        Rectangle btnBounds = {x, y, btnW, btnH};
+        if (CheckCollisionPointRec(MousePos,btnBounds)){
+            DrawRectangle(x + 1, y + 1, btnW - 2, btnH - 2, SKYBLUE);
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                SelectedStar = i;
+                Log("Selected Star Level " + std::to_string(SelectedStar+1));
+            }
+        }
+        if (SelectedStar == (i)) {
+            DrawRectangle(x + 1, y + 1, btnW - 2, btnH - 2, GRAY);
+        }
+        std::string text = std::to_string(i+1) + " Star";
+        DrawCenteredText(text, x + btnW / 2.0f, y + 50 * scale, std::max(1, int(25 * scale)), WHITE);
+    }
+}
+
 void DrawPlanning(int Width, int Height){
     DrawInterfaceBackGround(Width,Height);
     DrawConsoleLog(Width,Height);
@@ -421,6 +453,7 @@ void DrawPlanning(int Width, int Height){
     DrawChampionTray(Width,Height);
     DrawTeamSelectButtons(Width, Height);
     DrawStartButton(Width, Height);
+    DrawStarSelect(Width, Height);
     if (Editing == 1){
         DrawValidHexes(GridTeam1, Width, Height);
         ChooseHex(GridTeam1, Width, Height);

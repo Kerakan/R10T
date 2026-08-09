@@ -48,8 +48,12 @@ void managedamage(ChampState& champ1,ChampState& champ2, float dmg, std::vector<
         }
     }
     if (champ2.hp_current<=0){
-        Log("Champion " + champ2.def.name + "died");
+        Log("Champion " + champ2.def.name + " died");
         champ2.is_dead = true;
+        GridPos* pos = findGridPos(champ2.pos);
+        if (pos != nullptr) {
+            pos->is_occupied = false;
+        }
     }
 }
 void autoattack(ChampState& champ, std::vector<ChampState> &AllyTeam, std::vector<ChampState> &EnemyTeam){
@@ -64,31 +68,31 @@ void autoattack(ChampState& champ, std::vector<ChampState> &AllyTeam, std::vecto
 }
 using AbilityFunction = std::function<void(ChampState&, std::vector<ChampState>&, std::vector<ChampState>&)>;
 void akira_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam){
-    std::vector<ChampState> targets;
+    std::vector<ChampState*> targets;
     for (ChampState& enemy: EnemyTeam){
         if (enemy.is_dead) continue;
         if (targets.size() < 3){
-            targets.push_back(enemy);
+            targets.push_back(&enemy);
         }
         else{
             int max_distance = 0;
             int max_index = 0;
             for (int i = 0; i<targets.size(); i++){
-                int dis = distance(champ.pos, targets[i].pos);
+                int dis = distance(champ.pos, targets[i]->pos);
                 if (dis > max_distance){
                     max_distance = dis;
                     max_index = i;
                 }
             }
             if (distance(champ.pos, enemy.pos) < max_distance){
-                targets[max_index] = enemy;
+                targets[max_index] = &enemy;
             }
         }
     }
-    for (ChampState& target: targets){
-        float damage = champ.ap_current*(100/(50+target.magicres_current));
-        managedamage(champ, target, damage, AllyTeam, EnemyTeam);
-        Log("Champion " + champ.def.name + " uses ability on " + target.def.name + " dealing " + std::to_string(damage) + " damage");
+    for (ChampState* target: targets){
+        float damage = champ.ap_current*(100/(50+target->magicres_current));
+        managedamage(champ, *target, damage, AllyTeam, EnemyTeam);
+        Log("Champion " + champ.def.name + " uses ability on " + target->def.name + " dealing " + std::to_string(damage) + " damage");
     }
 }
 void totom_ability(ChampState& champ, std::vector<ChampState>& AllyTeam, std::vector<ChampState>& EnemyTeam){
