@@ -9,7 +9,7 @@
         "armor": [20, 40, 75],
         "magicres": [20, 40, 75],
         "ad": [75, 115, 175],
-        "ap": [50, 75, 125],
+        "ap": [40, 60, 100],
         "attackspeed": [0.6, 0.75, 1.00],
         "traits": ["Assassin", "ShadowFighters"]
     },
@@ -92,7 +92,7 @@
         "hp": [600, 1200, 1900],
         "armor": [20, 40, 75],
         "magicres": [20, 40, 75],
-        "ad": [100, 150, 250],
+        "ad": [90, 140, 220],
         "ap": [0, 0, 0],
         "attackspeed": [0.9, 1.2, 1.5],
         "traits": ["Celestials", "Sniper", "Lovers"]
@@ -218,7 +218,7 @@
         "hp": [1200, 2400, 3500],
         "armor": [50, 100, 175],
         "magicres": [50, 100, 175],
-        "ad": [20, 35, 60],
+        "ad": [35, 60, 100],
         "ap": [0, 0, 0],
         "attackspeed": [0.6, 0.75, 1.00],
         "traits": ["Titan", "Guardian"]
@@ -227,14 +227,14 @@
         "name": "Solarix",
         "cost": 3,
         "range": 3,
-        "mana_max": 100,
+        "mana_max": 75,
         "Targeting": "Closest",
         "hp": [600, 1200, 1900],
         "armor": [20, 40, 75],
         "magicres": [20, 40, 75],
         "ad": [20, 35, 60],
         "ap": [100, 250, 400],
-        "attackspeed": [0.6, 0.75, 1.00],
+        "attackspeed": [0.75, 0.95, 1.25],
         "traits": ["StarForger", "Mage"]
     }
 ]
