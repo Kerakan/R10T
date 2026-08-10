@@ -82,6 +82,7 @@ void ApplyTraits(){
     for (ChampState& c: Team2) c.hp_max = c.hp_current;
 }
 bool is_empty(std::vector<ChampState> Team){
+    if (Team.size()==0) return true;
     for (ChampState c: Team){
         if(!c.is_dead) return false;
     }
