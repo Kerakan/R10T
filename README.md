@@ -166,7 +166,7 @@ The most significant change I would make is I wouldn't wait until I am halfway t
 ### Build Instructions for Linux
 
 ```bash
-git clone https://github.com/Kerakan/Autobattler-combat-simulator-inspired-by-TFT/tree/main
+git clone https://github.com/Kerakan/R10T/tree/main
 cd R10T
 mkdir build && cd build
 cmake ..
