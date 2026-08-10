@@ -52,7 +52,6 @@ std::vector<GridPos> AStar(GridPos start, GridPos end, int range){
         closedlist.push_back(current);
         HexNode* currentPtr = &closedlist.back();
         if (distance(current.pos, end) <= range){
-            Log("Path has been found");
             path = {};
             path.push_back(currentPtr->pos);
             HexNode* node = currentPtr;
