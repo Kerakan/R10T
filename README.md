@@ -15,7 +15,7 @@ This is a data-driven autobattler combat simulator built from scratch in C++. In
 
 The program is built across 10+ systems decoupled from one another. A data-driven approach was taken such that a JSON pipeline loads champions and traits definitions at runtime, this way balancing champions and implementing new ones requires no code changes. The combat engine runs on a fixed timestep such that there are no hardware advantages and it handles targeting, attack speed, mana management, death, retargeting. Unit stats are modified using a modifier layer that handles all buffs and percentage multipliers coming from traits or abilities simultaneously. As for the hex grid, it uses axial oriented coordinates with an implemented A* pathfinding algorithm that uses early exit for ranged units, the Raylib renderer gets executed outside of the main combat loop so combat can be resolved without having to render.
 
-I purposely decided to build everything from scratch instead of relying on a game engine, this meant every system from abilities to pathfinding was a genuine architectural challenge that I needed to tackle instead of just using an engine default. The sandbox format required having to design a system that could deal with any arbitrary configuration of teams. This project also directly reflects my Mathematics and Statistics background directly — damage formulas, balance, trait thresholds, projectile trajectory calculations for piercing abilities — are all mathematically justified instead of done by feeling, I will go into it in the Design/Brainstorming section.
+I purposely decided to build everything from scratch instead of relying on a game engine, this meant every system from abilities to pathfinding was a genuine architectural challenge that I needed to tackle instead of just using an engine default. The sandbox format required having to design a system that could deal with any arbitrary configuration of teams. This project also directly reflects my Mathematics and Statistics background — damage formulas, balance, trait thresholds, projectile trajectory calculations for piercing abilities — are all mathematically justified instead of done by feeling, I will go into it in the Design/Brainstorming section.
 
 ---
 
@@ -25,7 +25,7 @@ I purposely decided to build everything from scratch instead of relying on a gam
 
 The two JSON files are responsible for all game data, ChampionPool.json and Traits.json are loaded at runtime by Champ.cpp and Traits.cpp, respectively, this way champions and traits get loaded at the start of the program without recompiling the project, this separation between data and code results in a significant speed-up on balancing compared to previous iterations where the values were hardcoded into the header files for champions and traits. Grid.cpp also feeds into Champ.cpp independently from any JSON file providing the geometric primitives.
 
-The middle layer consists of specialised modules that the combat loop delegates to, each with a single clear responsibility. EnemyFinding.cpp describes the A* algorithm and all functions dedicated to champion targetting and the movement that comes with it, it currently supports both LowestHP and Closest methods of targetting while new targeting methods are easy to implement. AttacksAbilitiesDeathHandling.cpp creates all champion abilities, handles the death of units and manages damage dealt taking into account: shield, damage formulas, invulnerability, execution thresholds. TraitStatSystem.cpp defines the functions that apply traits' modifiers to units taking into account the various thresholds while separating Celestials and Shadow Fighters special traits.
+The middle layer consists of specialised modules that the combat loop delegates to, each with a single clear responsibility. EnemyFinding.cpp describes the A* algorithm and all functions dedicated to champion targeting and the movement that comes with it, it currently supports both LowestHP and Closest methods of targeting while new targeting methods are easy to implement. AttacksAbilitiesDeathHandling.cpp creates all champion abilities, handles the death of units and manages damage dealt taking into account: shield, damage formulas, invulnerability, execution thresholds. TraitStatSystem.cpp defines the functions that apply traits' modifiers to units taking into account the various thresholds while separating Celestials and Shadow Fighters special traits.
 
 Finally, all files feed into Combat.cpp which manages the combat loop for each fixed timestep, Combat.cpp also includes some simple functions in order to apply traits on combat start and to count traits for rendering purposes. Draw.cpp reads from combat state and renders the GUI on screen, fully separated from combat logic. Draw.cpp and Combat.cpp are intentionally decoupled in order to be able to execute combat simulations without having to render. In the end, Main.cpp reads Combat.cpp and Draw.cpp, it analyses what's the current GamePhase executing different rendering functions or combat logic accordingly.
  
@@ -45,11 +45,7 @@ Every unit is defined with three sets of base stats corresponding to their star 
 
 ### Trait System
 
-Each team's active traits are determined by counting how many units on the board share a given trait, with each unique champion contributing exactly once regardless of duplicates. When a unit count reaches a trait threshold, that trait activates and applies stat modifiers to all units on the team that carry it, some traits add an execution threshold, others add simple stats like HP or attack damage while others add synergies between champions. Each of the values is applied to the champions on the team being evaluated that have this trait.
-
-### Item System
-
-The item system architecture is implemented and extensible — items are defined via the same JSON pipeline as champions and feed into the modifier layer — though the current build ships without active items to keep balance testing focused on trait and ability interactions.
+Each team's active traits are determined by counting how many units on the board share a given trait, with each unique champion contributing exactly once regardless of duplicates. When a unit count reaches a trait threshold, that trait activates and applies stat modifiers to all units on the team that carry it, some traits add an execution threshold, others add simple stats like HP or attack damage while others add synergies between champions.
 
 ### Combat Engine
 
@@ -61,7 +57,7 @@ The board gets represented as a hex grid using axial coordinates with pointy-top
 
 ### Ability System
 
-Every champion has a unique ability that fires when their mana threshold is reached, dealing either physical or magic damage depending on the champion's design. Abilities cover a deliberate range of archetypes, single target nukes, piercing projectiles, autoattack empowerment, healing, shielding, and invulnerability, ensuring every composition has meaningful ability diversity. New abilities are added by implementing them in a single file and assigning them to a champion, with no modifications to the combat loop required
+Every champion has a unique ability that fires when their mana threshold is reached, dealing either physical or magic damage depending on the champion's design. Abilities cover a deliberate range of archetypes, single target nukes, piercing projectiles, autoattack empowerment, healing, shielding, and invulnerability, ensuring every composition has meaningful ability diversity. New abilities are added by implementing them in a single file and assigning them to a champion, with no modifications to the combat loop required.
 
 ### Renderer
 
@@ -116,7 +112,7 @@ Faction membership was useful both naming and design — each champion's name re
 
 ### Trait System Design
 
-Traits can be separated into two major archetypes, that is factions(Dark Knights, Shadow Fighters and Celestials) that provide meaningful upgrades and changes to how the rounds play out and classes(Lovers, Bruisers, Snipers, Mages, ...) which usually just upgrade one or two stats of the units affected. A unit can be affected by bonuses from both factions and classes at the same time. Most traits activate at two thresholds — 2 and 3, or 3 and 5 — chosen to reward partial investment while making full 5-unit compositions meaningfully stronger rather than just incrementally better
+Traits can be separated into two major archetypes, that is factions(Dark Knights, Shadow Fighters and Celestials) that provide meaningful upgrades and changes to how the rounds play out and classes(Lovers, Bruisers, Snipers, Mages, ...) which usually just upgrade one or two stats of the units affected. A unit can be affected by bonuses from both factions and classes at the same time. Most traits activate at two thresholds — 2 and 3, or 3 and 5 — chosen to reward partial investment while making full 5-unit compositions meaningfully stronger rather than just incrementally better.
 
 While most traits have two thresholds at 2/3 or 3/5, Celestials work differently since they modify their stats depending on how many team members with the trait exist. The Lovers trait is the most mechanically distinct, a 2-unit trait between Draco and Lyra that creates a reactive synergy: when Draco takes damage Lyra gains a shield, and when Lyra deals damage Draco heals, making their positioning relative to each other a meaningful tactical decision.
 
@@ -156,7 +152,7 @@ Implementing a data-driven architecture was a first for this project — all pre
 
 ## What I Would Do Differently
 
-The most significant change I would make is I wouldn't wait until I am halfway through development to make the change to a data-driven design. Migrating hardcoded champion and trait values into JSON mid-project required restructuring systems that were already built around fixed values, a refactor that would have been unnecessary had I gone with the right architecture from the start. The impact on iteration speed was immediately obvious: being able to adjust a champion's stats without recompiling transformed the balancing process entirely. For the rendering layer, while Raylib was the right choice for this project given its lightweight integration and fast setup, a future project would use a lower-level rendering API such as OpenGL — both to demonstrate graphics programming depth and to work closer to the layer that studios actually build on
+The most significant change I would make is I wouldn't wait until I am halfway through development to make the change to a data-driven design. Migrating hardcoded champion and trait values into JSON mid-project required restructuring systems that were already built around fixed values, a refactor that would have been unnecessary had I gone with the right architecture from the start. The impact on iteration speed was immediately obvious: being able to adjust a champion's stats without recompiling transformed the balancing process entirely. For the rendering layer, while Raylib was the right choice for this project given its lightweight integration and fast setup, a future project would use a lower-level rendering API such as OpenGL — both to demonstrate graphics programming depth and to work closer to the layer that studios actually build on.
 
 ---
 
@@ -165,14 +161,14 @@ The most significant change I would make is I wouldn't wait until I am halfway t
 ### Requirements
 
 - C++20 or higher
-- CMake 3.x
-- Raylib [version]
-- nlohmann/json [version]
+- CMake 3.15 or higher
+- Raylib
+- nlohmann/json
 
 ### Build Instructions for Linux
 
 ```bash
-git clone https://github.com/Kerakan/R10T/tree/main
+git clone https://github.com/Kerakan/R10T.git
 cd R10T
 mkdir build && cd build
 cmake ..
