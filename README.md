@@ -4,8 +4,11 @@ A data-driven Autobattler combat simulator built on C++ using raylib for the vis
 
 <img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/6d07c129-7f60-4605-b1db-01967aa81fca" />
 
+## Demo Video
 
-[Demo Video](TO BE MADE)
+Click to view the entire video.
+
+[![Demo Video](https://github.com/user-attachments/assets/c4cb5b4e-d984-4ea9-bdac-386963c2959e)](https://youtu.be/ODaIZupxaTA)
 
 ---
 
