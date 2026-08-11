@@ -58,7 +58,22 @@ void AddTraits(){
     for (ChampState& c: Team1) c.hp_max = c.hp_current;
     for (ChampState& c: Team2) c.hp_max = c.hp_current;
 }
+bool is_empty(std::vector<ChampState> Team){
+    if (Team.size()==0) return true;
+    for (ChampState c: Team){
+        if(!c.is_dead) return false;
+    }
+    return true;
+}
 void ApplyTraits(){
+    if (is_empty(Team2)) {
+        EndMsg = "Team 1 wins!";
+        GamePhase = GameState::End;
+    }
+    if (is_empty(Team1)) {
+        EndMsg = "Team 2 wins!";
+        GamePhase = GameState::End;
+    }
     //Now we apply the effects
     for (ChampState& champion: Team1){
         for(Trait trait: champion.def.ChampTraits){
@@ -80,13 +95,6 @@ void ApplyTraits(){
     //Define max hp for each champion
     for (ChampState& c: Team1) c.hp_max = c.hp_current;
     for (ChampState& c: Team2) c.hp_max = c.hp_current;
-}
-bool is_empty(std::vector<ChampState> Team){
-    if (Team.size()==0) return true;
-    for (ChampState c: Team){
-        if(!c.is_dead) return false;
-    }
-    return true;
 }
 void run_combat(float DeltaTime) {
     if (!combat_started) return;
