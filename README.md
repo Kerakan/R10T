@@ -21,8 +21,14 @@ I purposely decided to build everything from scratch instead of relying on a gam
 
 ## Architecture Overview
 
-,,,,,
+<img width="1636" height="2142" alt="Untitled-2026-08-11-0957" src="https://github.com/user-attachments/assets/c0a1d7af-1489-46c2-8807-bbedf1fbcbf6" />
 
+The two JSON files are responsible for all game data, ChampionPool.json and Traits.json are loaded at runtime by Champ.cpp and Traits.cpp, respectively, this way champions and traits get loaded at the start of the program without recompiling the project, this separation between data and code results in a significant speed-up on balancing compared to previous iterations where the values were hardcoded into the header files for champions and traits. Grid.cpp also feeds into Champ.cpp independently from any JSON file providing the geometric primitives.
+
+The middle layer consists of specialised modules that the combat loop delegates to, each with a single clear responsibility. EnemyFinding.cpp describes the A* algorithm and all functions dedicated to champion targetting and the movement that comes with it, it currently supports both LowestHP and Closest methods of targetting while new targeting methods are easy to implement. AttacksAbilitiesDeathHandling.cpp creates all champion abilities, handles the death of units and manages damage dealt taking into account: shield, damage formulas, invulnerability, execution thresholds. TraitStatSystem.cpp defines the functions that apply traits' modifiers to units taking into account the various thresholds while separating Celestials and Shadow Fighters special traits.
+
+Finally, all files feed into Combat.cpp which manages the combat loop for each fixed timestep, Combat.cpp also includes some simple functions in order to apply traits on combat start and to count traits for rendering purposes. Draw.cpp reads from combat state and renders the GUI on screen, fully separated from combat logic. Draw.cpp and Combat.cpp are intentionally decoupled in order to be able to execute combat simulations without having to render. In the end, Main.cpp reads Combat.cpp and Draw.cpp, it analyses what's the current GamePhase executing different rendering functions or combat logic accordingly.
+ 
 ### Key Design Principles
 
 - **Data-driven design** — Champions, traits, and items are defined entirely in JSON, decoupling content from code so balancing and new content require zero code changes.
