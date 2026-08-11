@@ -134,16 +134,20 @@ void DrawChampions(std::vector<ChampState>& Team, int TeamNumber, int Width, int
     float hexRadius = 75 * scale;
     float champRadius = 50 * scale;
     Color drawcolor;
+    Color ChampColor;
     if (TeamNumber == 1) drawcolor = RED;
     else if (TeamNumber == 2) drawcolor = YELLOW;
     for (ChampState& Champ: Team){
+        if (Champ.star == 0) ChampColor = WHITE;
+        else if (Champ.star == 1) ChampColor = LIGHTGRAY;
+        else if (Champ.star == 2) ChampColor = GOLD;
         if (Champ.is_dead) continue;
         std::string name = Champ.def.name;
         int q = Champ.pos.q;
         int r = Champ.pos.r;
         Vector2 c= {originX + hexRadius * (q * sqrt(3) + r * sqrt(3)/2), originY + r * 112.5f * scale};
         DrawCircleLinesV(c, champRadius, drawcolor);
-        DrawCenteredText(name, c.x, c.y - 12.5f * scale, std::max(1, int(20 * scale)), WHITE);
+        DrawCenteredText(name, c.x, c.y - 12.5f * scale, std::max(1, int(20 * scale)), ChampColor);
         DrawHealthBar(c.x , c.y, champRadius, Champ, scale);
     }
 }
@@ -192,7 +196,7 @@ void DrawTraits(int position, std::vector<ChampState> &Team, std::vector<TraitDe
             }
             else if (position == 0){
                 std::string text = trait->name+ " " + std::to_string(trait->numchampsT2);
-                if (trait->numchampsT2 >= trait->thresholds[1]){
+                if (trait->numchampsT2 >= trait->thresholds[0]){
                     DrawText(text.c_str(), 100 * scale, (100 + 75*i) * scale, std::max(1, int(20 * scale)), SKYBLUE);
                     i++;
                 }
@@ -385,6 +389,7 @@ void ChooseHex(std::vector<GridPos>& TeamGrid, int Width, int Height){
                         return champ.pos.q == H.q && champ.pos.r == H.r; 
                     });
                     H.is_occupied = false;
+                    AddTraits();
                     Log("Removed Champion from Hex with coordinates q: " + std::to_string(H.q) + " r: " + std::to_string(H.r));
                 }
             }

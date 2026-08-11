@@ -15,18 +15,12 @@ void AddTraits(){
     for (ChampState& champion: Team1){
         for(Trait trait: champion.def.ChampTraits){
             TraitDef* t = TRAIT_POOL.at(trait);
-            if (std::find(TraitsInTeam1.begin(),TraitsInTeam1.end(),t)==TraitsInTeam1.end()){
-                TraitsInTeam1.push_back(t);
-            }
             t->numchampsT1 = 0;
         }
     }
     for (ChampState& champion: Team2){
         for(Trait trait: champion.def.ChampTraits){
             TraitDef* t = TRAIT_POOL.at(trait);
-            if (std::find(TraitsInTeam2.begin(),TraitsInTeam2.end(),t)==TraitsInTeam2.end()){
-                TraitsInTeam2.push_back(t);
-            }
             t->numchampsT2 = 0;
         }
     }
